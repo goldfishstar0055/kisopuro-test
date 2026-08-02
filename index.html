@@ -356,6 +356,67 @@ body::before{
 .drill-fb.ok h4{color:var(--lime)}
 .drill-fb.ng h4{color:var(--coral)}
 
+
+/* ═══ ホームの学習記録 ═══ */
+.home-stats{
+  display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  margin:32px 0 4px;text-align:left;
+}
+.hstat{background:var(--deep);padding:14px 16px;box-shadow:0 0 0 2px var(--slate)}
+.hstat>span{display:block;font-size:11px;color:var(--slate);letter-spacing:.12em}
+.hstat>b{display:block;font-size:30px;color:var(--gold);font-weight:400;line-height:1.3}
+.hstat>b small{font-size:14px;color:var(--slate);margin:0 2px}
+.hstat .sub2{display:block;font-size:11px;color:var(--slate);margin-top:4px;letter-spacing:.06em}
+.acc-track{height:8px;background:var(--void);box-shadow:0 0 0 2px var(--steel);margin-top:8px}
+.acc-fill{height:100%;background:var(--lime);transition:width .4s steps(8)}
+
+/* ═══ コードバトル ═══ */
+.foe{
+  display:flex;gap:22px;align-items:center;flex-wrap:wrap;
+  background:var(--deep);padding:20px 22px;margin-bottom:16px;
+  box-shadow:0 0 0 var(--px) var(--slate);
+}
+.foe-art{flex-shrink:0;animation:float 2.4s steps(4) infinite}
+.foe-art svg{display:block;image-rendering:pixelated}
+@keyframes float{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+.foe-art.hurt{animation:hurt .4s steps(4)}
+@keyframes hurt{0%,100%{opacity:1;transform:translateX(0)}
+  25%{opacity:.3;transform:translateX(10px)}75%{opacity:.3;transform:translateX(-10px)}}
+.foe-info{flex:1;min-width:180px}
+.foe-name{font-size:19px;color:var(--coral);margin-bottom:8px}
+.foe-hp{display:flex;gap:5px;margin-bottom:10px}
+.foe-hp span{width:26px;height:14px;background:var(--coral);box-shadow:0 0 0 2px var(--void)}
+.foe-hp span.gone{background:var(--void);box-shadow:0 0 0 2px var(--steel)}
+.foe-line{font-size:12.5px;color:var(--slate);line-height:1.7}
+
+.battle-card{background:var(--steel);padding:22px;box-shadow:0 0 0 var(--px) var(--void),0 0 0 calc(var(--px)*2) var(--gold)}
+.battle-card .badge{
+  display:inline-block;font-size:11px;letter-spacing:.14em;
+  background:var(--gold);color:var(--void);padding:3px 9px;margin-bottom:12px;
+}
+.cb-q{font-size:16.5px;line-height:1.8;margin-bottom:14px}
+.cb-code{
+  font-family:var(--mono);font-size:14px;line-height:1.9;background:var(--deep);
+  padding:16px 18px;margin-bottom:14px;overflow-x:auto;color:var(--bone);
+  box-shadow:0 0 0 2px var(--slate);white-space:pre;
+}
+.cb-code .blank{
+  background:var(--gold);color:var(--void);padding:0 8px;
+  animation:blink 1s steps(2) infinite;
+}
+.cb-hint{font-size:13px;color:var(--slate);margin-bottom:12px}
+.cb-hint code{font-family:var(--mono);background:var(--deep);padding:3px 8px;color:var(--sky)}
+.cb-input{display:flex;gap:10px;flex-wrap:wrap}
+.cb-input input{
+  flex:1;min-width:200px;font-family:var(--mono);font-size:15px;
+  background:var(--deep);color:var(--lime);border:0;padding:14px 16px;
+  box-shadow:0 0 0 2px var(--slate);
+}
+.cb-input input:focus{outline:none;box-shadow:0 0 0 2px var(--gold)}
+.cb-input input:disabled{color:var(--slate)}
+.cb-input input::placeholder{color:var(--slate);font-family:var(--ui);font-size:13px}
+.cb-tip{font-size:11.5px;color:var(--slate);margin-top:10px;line-height:1.7}
+
 @media (prefers-reduced-motion:reduce){
   *,*::before,*::after{animation:none !important;transition:none !important}
 }
@@ -384,6 +445,13 @@ body::before{
         <span class="meta">全7章 ／ 1章 5〜8分</span>
       </button>
 
+      <button class="mode-card" data-mode="code">
+        <span class="mode-icon">⚔️</span>
+        <h2>コードバトル</h2>
+        <p>選ぶのではなく、自分の手で書く。34問のプールから10問が出題され、3体の敵と戦いながら進む。第2問（20点）の直接対策。</p>
+        <span class="meta">10問 ／ HP5 ／ 全34問から抽選</span>
+      </button>
+
       <button class="mode-card" data-mode="hunt">
         <span class="mode-icon">🎯</span>
         <h2>バグハンター</h2>
@@ -399,6 +467,7 @@ body::before{
       </button>
     </div>
 
+    <div class="home-stats" id="home-stats"></div>
     <p class="best-line" id="best-line">記録を読み込み中…</p>
 
     <p class="foot">
@@ -476,6 +545,21 @@ body::before{
       <button class="btn ghost" data-act="quit-lesson">章えらびへ</button>
     </div>
     <div id="ls-body"></div>
+  </section>
+
+
+  <!-- ══════ コードバトル ══════ -->
+  <section id="s-code" class="hidden">
+    <div class="hud">
+      <div class="hud-item">SCORE<b id="cb-score">0</b></div>
+      <div class="hud-item">のこり<b id="cb-count">1 / 10</b></div>
+      <div class="hud-item">
+        じぶんのHP
+        <div class="hp" id="cb-hp"></div>
+      </div>
+      <button class="btn ghost" data-act="quit">やめる</button>
+    </div>
+    <div class="stage" id="cb-stage"></div>
   </section>
 
   <!-- ══════ リザルト ══════ -->
@@ -730,7 +814,7 @@ const $$ = s => [...document.querySelectorAll(s)];
 const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
 const shuffle = a => { const r=[...a]; for(let i=r.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[r[i],r[j]]=[r[j],r[i]];} return r; };
 
-let best = { hunt:0, time:0 };
+let best = { hunt:0, time:0, code:0 };
 let mode = null, S = {};
 
 const KEY = "bughunter-best";
@@ -757,11 +841,12 @@ async function saveBest(){
 }
 function paintBest(){
   $("#best-line").innerHTML =
-    `ハイスコア　バグハンター <b>${best.hunt}</b>　／　タイムアタック <b>${best.time}</b>`;
+    `ハイスコア　コードバトル <b>${best.code}</b>　／　バグハンター <b>${best.hunt}</b>　／　タイムアタック <b>${best.time}</b>`;
 }
 
 function show(id){
-  ["#s-title","#s-hunt","#s-time","#s-learn","#s-lesson","#s-result"].forEach(s=>$(s).classList.add("hidden"));
+  if(id==="#s-title" && typeof Stats!=="undefined"){ Stats.paint(); Stats.save(); }
+  ["#s-title","#s-hunt","#s-time","#s-learn","#s-lesson","#s-code","#s-result"].forEach(s=>$(s).classList.add("hidden"));
   $(id).classList.remove("hidden");
   window.scrollTo({top:0});
 }
@@ -772,6 +857,7 @@ function show(id){
    ═══════════════════════════════════════════ */
 function startHunt(){
   mode = "hunt";
+  Stats.run();
   S = { list:shuffle(HUNT), i:0, score:0, hp:3, cleared:0, wrongTopics:{} , locked:false};
   show("#s-hunt");
   drawHunt();
@@ -810,6 +896,7 @@ function pick(idx){
   S.locked = true;
   const p = S.list[S.i];
   const ok = idx === p.bug;
+  Stats.ans(ok);
   const lines = $$("#h-code .line");
 
   $$("#h-code .line.target").forEach(el=>{ el.classList.remove("target"); el.removeAttribute("tabindex"); });
@@ -861,6 +948,7 @@ const LIMIT = 90;
 
 function startTime(){
   mode = "time";
+  Stats.run();
   S = { list:shuffle(QUIZ), i:0, score:0, combo:0, maxCombo:0,
         correct:0, answered:0, wrongTopics:{}, left:LIMIT, locked:false };
   show("#s-time");
@@ -903,6 +991,7 @@ function answer(i){
   btns.forEach(b=>b.disabled=true);
   S.answered++;
 
+  Stats.ans(i===q.a);
   if(i===q.a){
     btns[i].classList.add("right");
     S.combo++;
@@ -1607,6 +1696,7 @@ function openLearn(){
 
 function startLesson(id){
   const ls = LESSONS.find(function(x){return x.id===id;});
+  Stats.run();
   L = { ls:ls, i:0, right:0, total:0, locked:false };
   $("#ls-kai").textContent = ls.kai;
   $("#ls-title").textContent = ls.title;
@@ -1666,6 +1756,7 @@ function answerStep(i){
   btns.forEach(function(b){ b.disabled = true; });
 
   const ok = i === st.a;
+  Stats.ans(ok);
   btns[i].classList.add(ok ? "right" : "wrong");
   if(!ok) btns[st.a].classList.add("right");
   if(ok) L.right++;
@@ -1724,11 +1815,405 @@ function finishLesson(){
 
 
 /* ═══════════════════════════════════════════
+   コードバトル：出題プール
+   k:"fill" … ▢ を埋める（1語）
+   k:"line" … 1行まるごと書く
+   ans は「受け付ける答え」の配列（空白・全角・末尾の ; は自動で吸収する）
+   ═══════════════════════════════════════════ */
+const CODEQ = [
+
+/* ── 動的メモリ ── */
+{t:"動的メモリ",k:"fill",q:"実行中にメモリを確保する関数名を入れなさい。",
+ code:'int *arr = ▢(n * sizeof(int));',ans:["malloc"],
+ e:"malloc = Memory ALLOCate。<stdlib.h> が必要です。"},
+{t:"動的メモリ",k:"fill",q:"確保に失敗したときの値を入れて、NULL チェックを完成させなさい。",
+ code:'int *arr = malloc(n * sizeof(int));\nif (arr == ▢) { return 1; }',ans:["NULL"],
+ e:"malloc も fopen も、失敗したら NULL。0 でも -1 でもありません。"},
+{t:"動的メモリ",k:"fill",q:"確保したメモリを解放する関数名を入れなさい。",
+ code:'▢(arr);',ans:["free"],
+ e:"malloc/realloc → free ／ fopen → fclose。対応を取り違えないこと。"},
+{t:"動的メモリ",k:"fill",q:"解放したあと、ダングリングポインタを防ぐために代入する値は。",
+ code:'free(arr);\narr = ▢;',ans:["NULL"],
+ e:"NULL を入れておけば誤使用に気づけるうえ、free(NULL) は無害なので二重 free も防げます。"},
+{t:"動的メモリ",k:"fill",q:"1個あたりのバイト数を求める演算子を入れなさい。",
+ code:'int *arr = malloc(n * ▢(int));',ans:["sizeof"],
+ e:"個数 × sizeof(型)。malloc(n) だと n バイトしか確保されません。"},
+{t:"動的メモリ",k:"fill",q:"確保済みの配列を拡張する関数名を入れなさい。",
+ code:'int *tmp = ▢(arr, 10 * sizeof(int));\nif (tmp == NULL) { free(arr); return 1; }\narr = tmp;',
+ ans:["realloc"],e:"必ず一時変数で受けてから NULL チェック。直接代入すると失敗時にアドレスを失います。"},
+{t:"動的メモリ",k:"line",q:"int 型を n 個分ぶん確保し、ポインタ arr で受け取る1行を書きなさい。",
+ hint:"int *arr = ______;",ans:["int *arr = malloc(n * sizeof(int));","int* arr = malloc(n * sizeof(int));","int *arr = (int *)malloc(n * sizeof(int));"],
+ e:"型 *変数 = malloc(個数 * sizeof(型)); が基本形です。"},
+{t:"動的メモリ",k:"line",q:"arr を解放し、ダングリングを防ぐところまで書きなさい（2文）。",
+ hint:"____(arr); arr = ____;",ans:["free(arr); arr = NULL;","free(arr);arr=NULL;"],
+ e:"free(arr); arr = NULL; の2つでワンセットです。"},
+
+/* ── 構造体 ── */
+{t:"構造体",k:"fill",q:"char 配列のメンバに文字列を入れる関数名を入れなさい。",
+ code:'▢(s.name, "神山四角子");',ans:["strcpy"],
+ e:"配列は = で丸ごと代入できません。#include <string.h> も忘れずに。"},
+{t:"構造体",k:"fill",q:"strcpy を使うために必要なヘッダファイル名を入れなさい。",
+ code:'#include <▢>',ans:["string.h"],
+ e:"string.h → strcpy / strlen / strcat。malloc は stdlib.h なので混同注意。"},
+{t:"構造体",k:"fill",q:"malloc / free を使うために必要なヘッダファイル名を入れなさい。",
+ code:'#include <▢>',ans:["stdlib.h"],
+ e:"stdlib.h。文字列系の string.h と間違えやすいところです。"},
+{t:"構造体",k:"fill",q:"hero は構造体変数。HP にアクセスする演算子を入れなさい。",
+ code:'Character hero;\nhero▢hp = 100;',ans:[".","ドット"],
+ e:"構造体変数にはドット。-> はポインタ専用です。"},
+{t:"構造体",k:"fill",q:"p はポインタ。HP にアクセスする演算子を入れなさい。",
+ code:'Character *p = &hero;\np▢hp = 100;',ans:["->"],
+ e:"ポインタにはアロー。(*p).hp と書いても同じ意味です。"},
+{t:"構造体",k:"fill",q:"hero のアドレスを関数に渡します。必要な記号を入れなさい。",
+ code:'heal(▢hero, 25);',ans:["&"],
+ e:"& で変数のアドレスを取り出します。関数側が書き換えるならアドレスを渡す必要があります。"},
+{t:"構造体",k:"fill",q:"hero を指すポインタ変数 p を宣言します。必要な記号を入れなさい。",
+ code:'Character ▢p = &hero;',ans:["*"],
+ e:"型 *変数名 でポインタ変数の宣言になります。"},
+{t:"構造体",k:"line",q:"メンバが char name[16] / int hp の Character 型で、名前「勇者」HP 40 の変数 hero を初期化する1行を書きなさい。",
+ hint:'Character hero = ______;',ans:['Character hero = {"勇者", 40};'],
+ e:"{} の中は定義した順番通りに並べます。初期化のときだけは文字列を = で書けます。"},
+{t:"構造体",k:"line",q:"構造体変数 s の char 配列メンバ name に「神山四角子」を入れる1行を書きなさい。",
+ hint:'______(s.name, "神山四角子");',ans:['strcpy(s.name, "神山四角子");'],
+ e:"配列に = は使えません。strcpy(コピー先, コピー元) です。"},
+
+/* ── ファイル書き込み ── */
+{t:"ファイル書き込み",k:"fill",q:"既存の sensor.csv を読み込むモードを入れなさい（引用符ごと）。",
+ code:'FILE *fp = fopen("sensor.csv", ▢);',ans:['"r"',"r"],
+ e:'"r" は読み込み専用。ファイルがないと NULL が返ります。'},
+{t:"ファイル書き込み",k:"fill",q:"すでにある記録を消さずに末尾へ追記するモードを入れなさい（引用符ごと）。",
+ code:'FILE *fp = fopen("log.csv", ▢);',ans:['"a"',"a"],
+ e:'"a" は append。"w" だと過去の記録が全部消えます。'},
+{t:"ファイル書き込み",k:"fill",q:"中身を全部消してから新しく書き直すモードを入れなさい（引用符ごと）。",
+ code:'FILE *fp = fopen("result.csv", ▢);',ans:['"w"',"w"],
+ e:'"w" は既存の内容を全消去します。消したくないなら "a"。'},
+{t:"ファイル書き込み",k:"fill",q:"ファイルを閉じる関数名を入れなさい。",
+ code:'▢(fp);\nfp = NULL;',ans:["fclose"],
+ e:"fp = NULL だけでは閉じられません。fclose がバッファを書き出してくれます。"},
+{t:"ファイル書き込み",k:"fill",q:"ファイルに書き込む関数名を入れなさい。",
+ code:'▢(fp, "%s,%d,%.1f\\n", "教室", 25, 60.5);',ans:["fprintf"],
+ e:"printf との違いは第1引数にファイルポインタを渡すことだけです。"},
+{t:"ファイル書き込み",k:"fill",q:"float の湿度を CSV に書きます。小数第1位までにする書式を入れなさい。",
+ code:'fprintf(fp, "%s,%d,▢\\n", loc, temp, humid);',ans:["%.1f"],
+ e:"%f だと 60.500000 と6桁出てしまいます。"},
+{t:"ファイル書き込み",k:"line",q:'result.csv を新規書き込みモードで開き、ポインタ fp で受け取る1行を書きなさい。',
+ hint:'FILE *fp = ______;',ans:['FILE *fp = fopen("result.csv", "w");','FILE* fp = fopen("result.csv", "w");'],
+ e:'新規に書くので "w"。開いた直後に NULL チェックを書く癖をつけましょう。'},
+{t:"ファイル書き込み",k:"line",q:"fp が NULL のときに 1 を返して終了する、NULL チェックの1行を書きなさい。",
+ hint:"if (______) { return 1; }",ans:["if (fp == NULL) { return 1; }","if(fp==NULL){return 1;}","if (fp == NULL) return 1;"],
+ e:"fopen・malloc の直後は必ずこれ。書かないとクラッシュの原因になります。"},
+
+/* ── ファイル読み込み ── */
+{t:"ファイル読み込み",k:"fill",q:"1行まるごと読み込む関数名を入れなさい。",
+ code:'char line[256];\nwhile (▢(line, sizeof(line), fp) != NULL) {',ans:["fgets"],
+ e:"fscanf はスペースで止まりますが、fgets なら1行まるごと読めます。"},
+{t:"ファイル読み込み",k:"fill",q:"fgets の第2引数を、配列サイズの変更に自動で追従する形で入れなさい。",
+ code:'char line[256];\nfgets(line, ▢, fp);',ans:["sizeof(line)"],
+ e:"256 と直書きすると、配列サイズを変えたときに直し忘れます。"},
+{t:"ファイル読み込み",k:"fill",q:"fgets ループの条件を完成させなさい（比較演算子）。",
+ code:'while (fgets(line, sizeof(line), fp) ▢ NULL) {',ans:["!="],
+ e:"fgets は終端で NULL を返します。EOF ではありません。"},
+{t:"ファイル読み込み",k:"fill",q:"メモリ上の文字列を分解する関数名を入れなさい。",
+ code:'▢(line, "%31[^,],%d,%f", d.location, &d.temperature, &d.humidity);',ans:["sscanf"],
+ e:"scanf→キーボード／fscanf→ファイル／sscanf→文字列。s は String。"},
+{t:"ファイル読み込み",k:"fill",q:"int メンバに読み込むために必要な記号を入れなさい。",
+ code:'sscanf(line, "%d", ▢d.temperature);',ans:["&"],
+ e:"int・float は & が必要。char 配列だけは & 不要です。"},
+{t:"ファイル読み込み",k:"fill",q:"char location[32] に、カンマ以外を読み込む書式を入れなさい。",
+ code:'sscanf(line, "▢,%d,%f", d.location, &d.temperature, &d.humidity);',ans:["%31[^,]"],
+ e:"配列サイズ 32 から1を引いて 31。終端の \\0 のぶんを空けます。"},
+{t:"ファイル読み込み",k:"line",q:"char line[256] に対する fgets ループの while 行を書きなさい（{ は不要）。",
+ hint:"while (______)",ans:["while (fgets(line, sizeof(line), fp) != NULL)","while(fgets(line,sizeof(line),fp)!=NULL)","while (fgets(line, sizeof(line), fp) != NULL) {"],
+ e:"第2引数は sizeof(line)、条件は != NULL。この2つが定型です。"},
+{t:"ファイル読み込み",k:"line",q:'CSV「教室,25,60.5」を SensorData d に読み込む sscanf の1行を書きなさい。（location は char[32]、temperature は int、humidity は float）',
+ hint:'sscanf(line, "%31[^,],%d,%f", ______);',
+ ans:['sscanf(line, "%31[^,],%d,%f", d.location, &d.temperature, &d.humidity);'],
+ e:"char 配列は & なし、int・float は & あり。この非対称が最頻出です。"},
+
+/* ── GitHub ── */
+{t:"GitHub",k:"fill",q:"変更をステージングエリアに追加するコマンドを入れなさい。",
+ code:'git ▢ main.c',ans:["add"],
+ e:"add はコミットの準備。まだ GitHub には届いていません。"},
+{t:"GitHub",k:"fill",q:"ステージの変更をローカルリポジトリに記録するコマンドを入れなさい。",
+ code:'git ▢ -m "exercise完成"',ans:["commit"],
+ e:"commit までは自分の PC の中。ネットがなくてもできます。"},
+{t:"GitHub",k:"fill",q:"ローカルの記録を GitHub に送信するコマンドを入れなさい。",
+ code:'git ▢ origin main',ans:["push"],
+ e:"push で初めて GitHub に届きます。add・commit をしていないと何も起きません。"},
+{t:"GitHub",k:"fill",q:"リポジトリを自分の PC にダウンロードするコマンドを入れなさい。",
+ code:'git ▢ https://github.com/user/repo.git',ans:["clone"],
+ e:"clone は自分の PC へ。Fork は GitHub 上にコピーを作る操作です。"}
+];
+
+
+/* ═══════════════════════════════════════════
+   ドット絵スプライト
+   ═══════════════════════════════════════════ */
+const SPRITES = {
+slime:{pal:{a:"#38b764",b:"#a7f070",c:"#1a1c2c",d:"#f4f4f4"},px:[
+"...aaaa...","..aaaaaa..",".aaaaaaaa.","aabaaaabaa","aacaaaacaa",
+"aaaaaaaaaa","aaaddddaaa","aaaaaaaaaa",".aaaaaaaa.","aa.aaaa.aa"]},
+ghost:{pal:{a:"#566c86",b:"#f4f4f4",c:"#1a1c2c",d:"#41a6f6"},px:[
+"..aaaaaa..",".aaaaaaaa.","aaaaaaaaaa","aacaaaacaa","aacaaaacaa",
+"aaaaaaaaaa","aaadddaaaa","aaaaaaaaaa","a.aa.aa.aa",".a.a.a.a.a"]},
+bat:{pal:{a:"#b13e53",b:"#ef7d57",c:"#1a1c2c",d:"#ffcd75"},px:[
+"a........a","aa.aaaa.aa","aaaaaaaaaa",".aabaabaa.",".aadaadaa.",
+".aaaaaaaa.","..aaccaa..","...aaaa...","....aa....","...a..a..."]},
+dragon:{pal:{a:"#ef7d57",b:"#ffcd75",c:"#1a1c2c",d:"#b13e53"},px:[
+"d........d","dd.aaaa.dd",".daaaaaad.","aaacaacaaa","aaacaacaaa",
+"aaaaaaaaaa","aabbbbbbaa","aab.cc.baa","aaabbbbaaa",".aa.aa.aa.","d.a....a.d"]}
+};
+
+function sprite(name,scale){
+  const s = SPRITES[name], u = scale||10;
+  let r = "";
+  s.px.forEach(function(row,y){
+    row.split("").forEach(function(ch,x){
+      if(ch===".") return;
+      r += `<rect x="${x*u}" y="${y*u}" width="${u}" height="${u}" fill="${s.pal[ch]}"/>`;
+    });
+  });
+  const w = s.px[0].length*u, h = s.px.length*u;
+  return `<svg viewBox="0 0 ${w} ${h}" width="${w}" height="${h}" xmlns="http://www.w3.org/2000/svg">${r}</svg>`;
+}
+
+
+/* ═══════════════════════════════════════════
+   コードバトル
+   ═══════════════════════════════════════════ */
+const FOES = [
+  {name:"セグフォ・スライム",sp:"slime", hp:3, line:"NULL チェックを書き忘れた者を喰らう。"},
+  {name:"メモリリーク・ゴースト",sp:"ghost", hp:3, line:"free されなかった記憶が、こごって形になった。"},
+  {name:"ダングリング・ドラゴン",sp:"dragon",hp:4, line:"解放済みの領域を今も指し続けている。"}
+];
+
+let B = {};
+
+/* 入力のゆれを吸収する */
+function norm(s){
+  const zen = {"（":"(","）":")","＜":"<","＞":">","＊":"*","＆":"&","；":";","：":":",
+               "，":",","、":",","．":".","。":".","”":'"',"“":'"',"’":"'","‘":"'",
+               "＿":"_","％":"%","＝":"=","！":"!","｛":"{","｝":"}","［":"[","］":"]",
+               "＃":"#","／":"/","＋":"+","－":"-","＄":"$","＾":"^"};
+  return String(s)
+    .replace(/[Ａ-Ｚａ-ｚ０-９]/g,function(c){return String.fromCharCode(c.charCodeAt(0)-0xFEE0);})
+    .replace(/[（）＜＞＊＆；：，、．。”“’‘＿％＝！｛｝［］＃／＋－＄＾]/g,function(c){return zen[c]||c;})
+    .replace(/\s+/g,"")
+    .replace(/;+$/,"")
+    .toLowerCase();
+}
+function judge(input, list){
+  const v = norm(input);
+  if(!v) return false;
+  return list.some(function(a){ return norm(a)===v; });
+}
+
+function startBattle(){
+  Stats.run();
+  const pool = shuffle(CODEQ).slice(0,10);
+  B = { qs:pool, i:0, hp:5, score:0, right:0, foe:0, foeHp:FOES[0].hp,
+        wrongTopics:{}, locked:false, usedHint:false };
+  show("#s-code");
+  drawBattle();
+}
+
+function currentFoe(){ return B.i<3?0 : B.i<6?1 : 2; }
+
+function drawBattle(){
+  const q = B.qs[B.i];
+  const fi = currentFoe();
+  if(fi !== B.foe){ B.foe = fi; B.foeHp = FOES[fi].hp; }
+  const foe = FOES[fi];
+  B.locked = false; B.usedHint = false;
+
+  $("#cb-hp").innerHTML = [0,1,2,3,4].map(function(i){
+    return `<span class="${i<B.hp?"":"lost"}"></span>`; }).join("");
+  $("#cb-score").textContent = B.score;
+  $("#cb-count").textContent = (B.i+1)+" / "+B.qs.length;
+
+  $("#cb-stage").innerHTML = `
+    <div class="foe">
+      <div class="foe-art" id="cb-art">${sprite(foe.sp)}</div>
+      <div class="foe-info">
+        <p class="foe-name">${foe.name}</p>
+        <div class="foe-hp">${Array.from({length:foe.hp},function(_,i){
+          return `<span class="${i<B.foeHp?"":"gone"}"></span>`;}).join("")}</div>
+        <p class="foe-line">${foe.line}</p>
+      </div>
+    </div>
+
+    <div class="battle-card">
+      <span class="badge">${q.t}　／　${q.k==="fill"?"▢ を埋めよ":"1行まるごと書け"}</span>
+      <p class="cb-q">${esc(q.q)}</p>
+      ${q.code?`<pre class="cb-code">${esc(q.code).replace(/▢/g,'<span class="blank">▢</span>')}</pre>`:""}
+      ${q.hint?`<p class="cb-hint">かたち：<code>${esc(q.hint)}</code></p>`:""}
+      <div class="cb-input">
+        <input type="text" id="cb-in" autocomplete="off" autocapitalize="off"
+               autocorrect="off" spellcheck="false"
+               placeholder="${q.k==="fill"?"ここに入れる語を入力":"1行そのまま入力"}">
+        <button class="btn" id="cb-go">こうげき</button>
+      </div>
+      <p class="cb-tip">Enter でも攻撃できます。空白の数や末尾の ; は多少ちがっても通ります。</p>
+      <div id="cb-fb"></div>
+    </div>`;
+
+  const inp = $("#cb-in");
+  inp.focus();
+  inp.addEventListener("keydown",function(e){
+    if(e.key==="Enter"){ e.preventDefault(); attack(); }
+  });
+  $("#cb-go").addEventListener("click",attack);
+  window.scrollTo({top:0});
+}
+
+function attack(){
+  if(B.locked) return;
+  const q = B.qs[B.i];
+  const raw = $("#cb-in").value;
+  if(!raw.trim()){ $("#cb-in").focus(); return; }
+  B.locked = true;
+
+  const ok = judge(raw, q.ans);
+  Stats.ans(ok);
+  $("#cb-in").disabled = true;
+  $("#cb-go").disabled = true;
+
+  if(ok){
+    B.right++;
+    B.foeHp--;
+    B.score += 100 + B.hp*20;
+    $("#cb-art").classList.add("hurt");
+  }else{
+    B.hp--;
+    B.wrongTopics[q.t] = (B.wrongTopics[q.t]||0)+1;
+    $("#cb-stage").classList.add("shake");
+    setTimeout(function(){ $("#cb-stage").classList.remove("shake"); },320);
+  }
+
+  const dead  = B.hp<=0;
+  const last  = B.i === B.qs.length-1;
+  const felled = B.foeHp<=0;
+
+  $("#cb-fb").innerHTML = `
+    <div class="drill-fb ${ok?"ok":"ng"}">
+      <h4>${ok?(felled?FOES[currentFoe()].name+" を倒した":"命中　"+(100+B.hp*20)+" pts"):"はずれ　HP −1"}</h4>
+      <p>正しい答え：<code>${esc(q.ans[0])}</code></p>
+      <p style="margin-top:6px">${esc(q.e)}</p>
+    </div>
+    <div style="text-align:right;margin-top:14px">
+      <button class="btn" id="cb-next">${(dead||last)?"結果を見る":"つぎへ　▶"}</button>
+    </div>`;
+  $("#cb-next").focus();
+  $("#cb-next").addEventListener("click",function(){
+    if(dead||last) finishBattle();
+    else { B.i++; drawBattle(); }
+  });
+}
+
+function finishBattle(){
+  const total = B.i+1;
+  const acc = total?Math.round(B.right/total*100):0;
+  const cleared = B.hp>0 && B.right===B.qs.length;
+  const rank = acc>=95?"S":acc>=80?"A":acc>=60?"B":"C";
+
+  if(B.score > best.code){ best.code = B.score; saveBest(); paintBest(); }
+
+  const rk = $("#r-rank");
+  rk.textContent = rank;
+  rk.className = "rank " + (rank==="S"?"s":rank==="C"?"c":"");
+  $("#r-mode").textContent = cleared ? "CODE BATTLE — 踏破" : "CODE BATTLE";
+  $("#r-score").textContent = B.score.toLocaleString()+" pts";
+  $("#r-newbest").classList.toggle("hidden", B.score !== best.code || B.score===0);
+
+  $("#r-stats").innerHTML = `
+    <div class="stat"><span>書けた</span><b>${B.right} / ${total}</b></div>
+    <div class="stat"><span>正答率</span><b>${acc}%</b></div>
+    <div class="stat"><span>のこりHP</span><b>${Math.max(0,B.hp)}</b></div>
+    <div class="stat"><span>ベスト</span><b>${best.code}</b></div>`;
+
+  const weak = Object.entries(B.wrongTopics).sort(function(a,b){return b[1]-a[1];});
+  $("#r-weak").innerHTML = weak.length ? `
+    <div class="weak">
+      <h3>書けなかったトピック</h3>
+      <ul>${weak.map(function(e){return `<li>${e[0]}　${e[1]}問　→　${GUIDE[e[0]]||""}</li>`;}).join("")}</ul>
+      <p class="tip">「読めばわかる」と「手で書ける」は別の力です。書けなかったところは、紙に3回書き写すのが一番早く直ります。</p>
+    </div>` : `
+    <div class="weak" style="box-shadow:0 0 0 4px var(--lime)">
+      <h3 style="color:var(--lime)">全問クリア</h3>
+      <p class="tip">10問すべて手で書けました。第2問の20点はもう取れます。</p>
+    </div>`;
+
+  mode = "code";
+  show("#s-result");
+}
+
+
+/* ═══════════════════════════════════════════
+   学習記録（時間・回数・総合正解率）
+   ═══════════════════════════════════════════ */
+const SKEY = "bughunter-stats";
+const Stats = {
+  d:{sec:0,runs:0,right:0,total:0},
+  dirty:false,
+
+  async load(){
+    try{
+      const v = localStorage.getItem(SKEY);
+      if(v){ this.d = Object.assign(this.d, JSON.parse(v)); this.paint(); return; }
+    }catch(e){}
+    try{
+      const r = await window.storage.get(SKEY);
+      if(r && r.value) this.d = Object.assign(this.d, JSON.parse(r.value));
+    }catch(e){}
+    this.paint();
+  },
+
+  async save(){
+    this.dirty = false;
+    try{ localStorage.setItem(SKEY, JSON.stringify(this.d)); return; }catch(e){}
+    try{ await window.storage.set(SKEY, JSON.stringify(this.d)); }catch(e){}
+  },
+
+  run(){ this.d.runs++; this.dirty = true; },
+  ans(ok){ this.d.total++; if(ok) this.d.right++; this.dirty = true; },
+  tick(){ this.d.sec++; this.dirty = true; },
+
+  paint(){
+    const d = this.d;
+    const h = Math.floor(d.sec/3600), m = Math.floor(d.sec%3600/60);
+    const timeTxt = h>0 ? h+"<small>時間</small>"+m+"<small>分</small>"
+                        : m+"<small>分</small>";
+    const acc = d.total ? Math.round(d.right/d.total*100) : 0;
+    const el = document.getElementById("home-stats");
+    if(!el) return;
+    el.innerHTML = `
+      <div class="hstat"><span>べんきょうした時間</span><b>${d.sec<60?"0<small>分</small>":timeTxt}</b></div>
+      <div class="hstat"><span>取り組んだ回数</span><b>${d.runs}<small>回</small></b></div>
+      <div class="hstat"><span>総合正解率</span><b>${acc}<small>%</small></b>
+        <div class="acc-track"><div class="acc-fill" style="width:${acc}%"></div></div>
+        <span class="sub2">${d.right} / ${d.total} 問</span></div>`;
+  }
+};
+
+/* 1秒ごと：タイトル以外の画面にいる間だけ勉強時間を加算 */
+setInterval(function(){
+  const onTitle = !document.getElementById("s-title").classList.contains("hidden");
+  if(!onTitle) Stats.tick();
+  if(Stats.dirty && Stats.d.sec % 10 === 0) Stats.save();
+}, 1000);
+
+window.addEventListener("beforeunload", function(){
+  try{ localStorage.setItem(SKEY, JSON.stringify(Stats.d)); }catch(e){}
+});
+
+
+/* ═══════════════════════════════════════════
    操作
    ═══════════════════════════════════════════ */
 $$(".mode-card").forEach(b=>b.addEventListener("click",()=>{
   const m = b.dataset.mode;
   if(m==="learn") openLearn();
+  else if(m==="code") startBattle();
   else if(m==="hunt") startHunt();
   else startTime();
 }));
@@ -1738,7 +2223,11 @@ document.addEventListener("click",e=>{
   if(act==="quit"){ if(S.timer) clearInterval(S.timer); show("#s-title"); }
   if(act==="quit-lesson"){ openLearn(); }
   if(act==="home"){ show("#s-title"); }
-  if(act==="retry"){ mode==="hunt" ? startHunt() : startTime(); }
+  if(act==="retry"){
+    if(mode==="code") startBattle();
+    else if(mode==="hunt") startHunt();
+    else startTime();
+  }
 });
 
 document.addEventListener("keydown",e=>{
@@ -1760,6 +2249,7 @@ document.addEventListener("keydown",e=>{
 
 loadBest();
 loadDone();
+Stats.load();
 </script>
 </body>
 </html>
