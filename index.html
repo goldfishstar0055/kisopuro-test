@@ -2264,7 +2264,7 @@ window.addEventListener("beforeunload", function(){
 
 /* ★ ここに Apps Script のウェブアプリURLを貼る。
       空のままなら偏差値の表示は出ず、ゲームは今まで通り動く。 */
-const API = "https://script.google.com/a/macros/kamiyama.ac.jp/s/AKfycbz7HkZ8zpYWtDPzLq9qN-pPkxYxduYccVugZ6DBYEPleh2X1h5GNeQ_WXuG1l581nwB/exec";
+const API = "";
 
 /* 正規化の基準値（Apps Script 側と必ず揃える） */
 const CAP = { code:2000, hunt:2880, time:6000 };
@@ -2389,49 +2389,63 @@ const Dev = {
       return;
     }
 
-    if(d.count < (d.min||5)){
-      const rest = (d.min||5) - d.count;
+    const min = d.min || 5;
+
+    /* 出せる偏差値がまだ何もないとき */
+    if(d.devTotal === undefined && d.devAcc === undefined){
+      let why;
+      if(d.count < min){
+        why = `いま <b>${d.count}人</b>が参加しています。<br>
+               偏差値を出すには、あと <b>${min - d.count}人</b>ぶんの記録が必要です。`;
+      }else if(!d.myAnswered || d.myAnswered < 5){
+        why = `みんなの記録は集まっています（${d.count}人）。<br>
+               あなたの記録がまだ少ないので、<b>あと ${5 - (d.myAnswered||0)}問</b>答えてください。`;
+      }else{
+        why = `もう少しで出せます。何か1モード遊んでみてください。`;
+      }
       el.innerHTML = `
         <div class="dev-card wait">
           <p class="eyebrow">みんなの中での立ち位置</p>
-          <p class="dev-wait">
-            いま <b>${d.count}人</b>が参加しています。<br>
-            偏差値を出すには、あと <b>${rest}人</b>ぶんの記録が必要です。<br>
-            <span class="dev-note">人数が少ないと数字が暴れるので、5人集まるまで待ちます。</span>
+          <p class="dev-wait">${why}
+            <span class="dev-note">人数が少ないと数字が暴れるので、${min}人集まるまで待ちます。</span>
           </p>
         </div>`;
       return;
     }
 
-    if(d.devTotal === undefined){
-      el.innerHTML = `
-        <div class="dev-card wait">
-          <p class="eyebrow">みんなの中での立ち位置</p>
-          <p class="dev-wait">
-            まずは10問くらい答えてみてください。<br>
-            <span class="dev-note">参加者 ${d.count}人／平均正解率 ${d.avgAcc}%</span>
-          </p>
-        </div>`;
-      return;
-    }
+    /* 総合力がまだ出せない（スコアのつくモードを遊んでいない）とき */
+    const main = (d.devTotal !== undefined)
+      ? { v:d.devTotal, label:"総合力の偏差値" }
+      : { v:d.devAcc,   label:"正解率の偏差値" };
+
+    const notYet = (d.devTotal === undefined)
+      ? `<p class="dev-note" style="color:var(--gold)">
+           コードバトル・バグハンター・タイムアタックを遊ぶと、総合力の偏差値も出ます。
+           （いま総合力を出せる人は ${d.countT||0}人）
+         </p>` : "";
+
+    const cell = function(label,val){
+      return val===undefined ? "" : `<div><span>${label}</span><b>${val}</b></div>`;
+    };
 
     el.innerHTML = `
       <div class="dev-card">
         <p class="eyebrow">みんなの中での立ち位置</p>
         <div class="dev-main">
           <div class="dev-num">
-            <b>${d.devTotal}</b>
-            <span>総合力の偏差値</span>
-            <em>${this.word(d.devTotal)}</em>
+            <b>${main.v}</b>
+            <span>${main.label}</span>
+            <em>${this.word(main.v)}</em>
           </div>
-          ${this.gauge(d.devTotal)}
+          ${this.gauge(main.v)}
         </div>
         <div class="dev-sub">
-          <div><span>正解率の偏差値</span><b>${d.devAcc}</b></div>
-          <div><span>あなたの正解率</span><b>${d.myAcc}%</b></div>
-          <div><span>全体の平均正解率</span><b>${d.avgAcc}%</b></div>
-          <div><span>参加者</span><b>${d.count}人</b></div>
+          ${cell("正解率の偏差値", d.devAcc)}
+          ${cell("あなたの正解率", d.myAcc!==undefined ? d.myAcc+"%" : undefined)}
+          ${cell("全体の平均正解率", d.avgAcc!==undefined ? d.avgAcc+"%" : undefined)}
+          ${cell("参加者", d.count+"人")}
         </div>
+        ${notYet}
         <p class="dev-note">
           偏差値50がちょうど真ん中。誰が何位かは誰にも見えません。
           送っているのは点数と正解数だけで、名前や端末の情報は送っていません。
@@ -2446,14 +2460,16 @@ const Dev = {
 function paintResultDev(){
   const el = document.getElementById("r-dev");
   if(!el) return;
-  if(!API || !Dev.d || Dev.d.devTotal === undefined){ el.innerHTML = ""; return; }
   const d = Dev.d;
+  if(!API || !d || (d.devTotal === undefined && d.devAcc === undefined)){ el.innerHTML = ""; return; }
+  const v = d.devTotal !== undefined ? d.devTotal : d.devAcc;
+  const lb = d.devTotal !== undefined ? "いまの総合力の偏差値" : "いまの正解率の偏差値";
   el.innerHTML = `
     <div class="dev-flash">
-      <div><b>${d.devTotal}</b></div>
+      <div><b>${v}</b></div>
       <div>
-        <span>いまの総合力の偏差値</span>
-        <em>${Dev.word(d.devTotal)}　（参加者 ${d.count}人）</em>
+        <span>${lb}</span>
+        <em>${Dev.word(v)}　（参加者 ${d.count}人）</em>
       </div>
     </div>`;
 }
