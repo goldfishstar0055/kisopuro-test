@@ -1,0 +1,891 @@
+<meta charset="utf-8">
+<title>BUG HUNTER — 基礎プログラミングII 前期試験対策</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DotGothic16&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════════════
+   Sweetie 16 派生パレット
+   ═══════════════════════════════════════════ */
+:root{
+  --void:#1a1c2c;      /* 背景（濃紺） */
+  --deep:#12141f;      /* コードパネル */
+  --steel:#29366f;     /* パネル面 */
+  --slate:#566c86;     /* 補助テキスト */
+  --sky:#41a6f6;       /* 情報 */
+  --lime:#a7f070;      /* 正解 */
+  --green:#38b764;
+  --gold:#ffcd75;      /* 主役アクセント */
+  --coral:#ef7d57;     /* 警告 */
+  --blood:#b13e53;     /* ミス */
+  --bone:#f4f4f4;
+
+  --px:4px;
+  --ui:"DotGothic16","Hiragino Sans","Yu Gothic",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+html{height:100%}
+body{
+  min-height:100%;
+  background:var(--void);
+  color:var(--bone);
+  font-family:var(--ui);
+  font-size:16px;
+  line-height:1.7;
+  image-rendering:pixelated;
+  overflow-x:hidden;
+}
+
+/* 走査線オーバーレイ */
+body::after{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:99;
+  background:repeating-linear-gradient(
+    to bottom,transparent 0 3px,rgba(0,0,0,.16) 3px 4px);
+  mix-blend-mode:multiply;
+}
+
+/* 背景のドットグリッド */
+body::before{
+  content:"";position:fixed;inset:0;pointer-events:none;z-index:0;
+  background-image:radial-gradient(var(--steel) 1px,transparent 1px);
+  background-size:24px 24px;opacity:.35;
+}
+
+.wrap{position:relative;z-index:1;max-width:960px;margin:0 auto;padding:32px 20px 80px}
+
+/* ═══ 共通パーツ ═══ */
+.panel{
+  background:var(--steel);
+  box-shadow:0 0 0 var(--px) var(--void),0 0 0 calc(var(--px)*2) var(--slate);
+  padding:20px;
+}
+
+.btn{
+  display:inline-block;font-family:var(--ui);font-size:15px;
+  background:var(--gold);color:var(--void);
+  border:0;padding:12px 22px;cursor:pointer;
+  box-shadow:0 0 0 var(--px) var(--void),0 var(--px) 0 var(--px) var(--coral);
+  transition:transform .06s steps(2),box-shadow .06s steps(2);
+}
+.btn:hover{transform:translateY(-2px);box-shadow:0 0 0 var(--px) var(--void),0 6px 0 var(--px) var(--coral)}
+.btn:active{transform:translateY(var(--px));box-shadow:0 0 0 var(--px) var(--void)}
+.btn:focus-visible{outline:var(--px) solid var(--sky);outline-offset:6px}
+.btn.ghost{background:transparent;color:var(--gold);box-shadow:0 0 0 var(--px) var(--gold)}
+.btn.ghost:hover{background:var(--gold);color:var(--void)}
+
+.eyebrow{
+  font-size:12px;letter-spacing:.22em;color:var(--gold);
+  text-transform:uppercase;margin-bottom:8px;
+}
+
+.hidden{display:none !important}
+
+/* ═══ タイトル ═══ */
+.title-screen{text-align:center;padding:48px 0 24px}
+.logo{
+  font-size:clamp(38px,8vw,76px);line-height:1;letter-spacing:.04em;
+  color:var(--gold);
+  text-shadow:
+    var(--px) var(--px) 0 var(--blood),
+    calc(var(--px)*2) calc(var(--px)*2) 0 var(--void);
+  margin-bottom:6px;
+}
+.logo .glyph{color:var(--lime);display:inline-block;animation:hop 1.1s steps(2) infinite}
+@keyframes hop{0%,60%{transform:translateY(0)}80%{transform:translateY(-8px)}}
+.sub{color:var(--slate);font-size:14px;letter-spacing:.12em;margin-bottom:36px}
+
+.mode-grid{display:grid;gap:20px;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));text-align:left}
+.mode-card{
+  background:var(--steel);cursor:pointer;padding:24px;border:0;
+  color:var(--bone);font-family:var(--ui);text-align:left;
+  box-shadow:0 0 0 var(--px) var(--void),0 0 0 calc(var(--px)*2) var(--slate);
+  transition:box-shadow .1s steps(2),transform .1s steps(2);
+}
+.mode-card:hover,.mode-card:focus-visible{
+  outline:none;transform:translateY(-4px);
+  box-shadow:0 0 0 var(--px) var(--void),0 0 0 calc(var(--px)*2) var(--gold);
+}
+.mode-card h2{font-size:24px;color:var(--gold);margin-bottom:8px;font-weight:400}
+.mode-card p{font-size:14px;color:var(--bone);opacity:.85;margin-bottom:14px}
+.mode-card .meta{font-size:12px;color:var(--sky);letter-spacing:.1em}
+.mode-icon{font-size:32px;line-height:1;margin-bottom:12px;display:block}
+
+.best-line{margin-top:28px;font-size:13px;color:var(--slate);letter-spacing:.08em}
+.best-line b{color:var(--gold);font-weight:400}
+
+/* ═══ HUD ═══ */
+.hud{
+  display:flex;justify-content:space-between;align-items:center;gap:16px;
+  flex-wrap:wrap;margin-bottom:20px;padding:12px 16px;
+  background:var(--deep);
+  box-shadow:0 0 0 var(--px) var(--slate);
+}
+.hud-item{font-size:13px;letter-spacing:.1em;color:var(--slate)}
+.hud-item b{display:block;font-size:22px;color:var(--gold);font-weight:400;line-height:1.2}
+.hud-item.danger b{color:var(--coral)}
+
+/* HPブロック */
+.hp{display:flex;gap:4px;margin-top:4px}
+.hp span{width:18px;height:18px;background:var(--lime);box-shadow:0 0 0 2px var(--void)}
+.hp span.lost{background:var(--deep);box-shadow:0 0 0 2px var(--slate)}
+
+/* タイマーバー */
+.timer-track{width:160px;height:14px;background:var(--deep);box-shadow:0 0 0 2px var(--slate);margin-top:6px}
+.timer-fill{height:100%;background:var(--sky);width:100%;transition:width .25s linear}
+.timer-fill.warn{background:var(--gold)}
+.timer-fill.crit{background:var(--coral);animation:blink .4s steps(2) infinite}
+@keyframes blink{50%{opacity:.35}}
+
+/* ═══ コードパネル（署名要素） ═══ */
+.stage{position:relative}
+.stage.shake{animation:shake .3s steps(3)}
+@keyframes shake{
+  0%{transform:translate(0)}25%{transform:translate(-8px,3px)}
+  50%{transform:translate(7px,-3px)}75%{transform:translate(-4px,2px)}100%{transform:translate(0)}
+}
+
+.prompt{
+  font-size:15px;margin-bottom:14px;color:var(--bone);
+  padding-left:14px;border-left:var(--px) solid var(--gold);
+}
+
+.code{
+  background:var(--deep);padding:18px 0;
+  box-shadow:0 0 0 var(--px) var(--slate);
+  font-family:var(--mono);font-size:14.5px;line-height:1.9;
+  overflow-x:auto;
+}
+.line{
+  display:flex;align-items:baseline;gap:14px;
+  padding:1px 18px;white-space:pre;
+  border-left:var(--px) solid transparent;
+}
+.line .no{color:var(--slate);min-width:22px;text-align:right;user-select:none;font-size:12px}
+.line .src{flex:1}
+
+.line.target{cursor:crosshair}
+.line.target:hover,.line.target:focus-visible{
+  outline:none;
+  background:linear-gradient(90deg,rgba(255,205,117,.18),transparent);
+  border-left-color:var(--gold);
+}
+.line.target:hover .no,.line.target:focus-visible .no{color:var(--gold)}
+.line.target:hover .src::after{content:" ◀";color:var(--gold)}
+
+.line.hit{background:rgba(167,240,112,.16);border-left-color:var(--lime)}
+.line.hit .no{color:var(--lime)}
+.line.miss{background:rgba(177,62,83,.28);border-left-color:var(--blood)}
+.line.reveal{background:rgba(167,240,112,.16);border-left-color:var(--lime)}
+
+/* ═══ 判定ふきだし ═══ */
+.verdict{margin-top:18px;padding:18px;box-shadow:0 0 0 var(--px) var(--slate);background:var(--steel)}
+.verdict.good{box-shadow:0 0 0 var(--px) var(--lime)}
+.verdict.bad{box-shadow:0 0 0 var(--px) var(--coral)}
+.verdict h3{font-size:19px;font-weight:400;margin-bottom:10px}
+.verdict.good h3{color:var(--lime)}
+.verdict.bad h3{color:var(--coral)}
+.verdict dl{font-size:14px}
+.verdict dt{color:var(--gold);font-size:12px;letter-spacing:.14em;margin-top:12px}
+.verdict dt:first-child{margin-top:0}
+.verdict dd{margin-top:2px;line-height:1.75}
+.verdict code{
+  font-family:var(--mono);font-size:13.5px;background:var(--deep);
+  padding:2px 6px;color:var(--lime);
+}
+.verdict pre{
+  font-family:var(--mono);font-size:13.5px;background:var(--deep);
+  padding:12px 14px;margin-top:6px;overflow-x:auto;color:var(--lime);line-height:1.7;
+}
+.verdict .next{margin-top:18px}
+
+/* ═══ タイムアタック ═══ */
+.q-text{font-size:18px;line-height:1.75;margin-bottom:20px}
+.q-text .codeblock{
+  display:block;font-family:var(--mono);font-size:14px;background:var(--deep);
+  padding:12px 14px;margin-top:12px;color:var(--sky);white-space:pre-wrap;line-height:1.7;
+}
+.choices{display:grid;gap:10px}
+.choice{
+  text-align:left;font-family:var(--ui);font-size:15px;line-height:1.6;
+  background:var(--deep);color:var(--bone);border:0;padding:14px 16px;cursor:pointer;
+  box-shadow:0 0 0 2px var(--slate);
+  display:flex;gap:12px;align-items:flex-start;
+}
+.choice .key{color:var(--gold);flex-shrink:0;font-size:13px}
+.choice .txt{font-family:var(--mono);font-size:13.5px;word-break:break-word}
+.choice.plain .txt{font-family:var(--ui);font-size:15px}
+.choice:hover:not(:disabled){box-shadow:0 0 0 2px var(--gold);background:#1c2140}
+.choice:focus-visible{outline:2px solid var(--sky);outline-offset:3px}
+.choice:disabled{cursor:default}
+.choice.right{box-shadow:0 0 0 2px var(--lime);background:rgba(167,240,112,.14)}
+.choice.wrong{box-shadow:0 0 0 2px var(--blood);background:rgba(177,62,83,.22)}
+
+.combo{
+  position:fixed;right:28px;top:50%;transform:translateY(-50%);
+  font-size:44px;color:var(--gold);z-index:50;pointer-events:none;
+  text-shadow:var(--px) var(--px) 0 var(--blood);opacity:0;
+}
+.combo.pop{animation:pop .5s steps(4)}
+@keyframes pop{
+  0%{opacity:0;transform:translateY(-50%) scale(.5)}
+  40%{opacity:1;transform:translateY(-50%) scale(1.15)}
+  100%{opacity:0;transform:translateY(-50%) scale(1)}
+}
+
+/* ═══ リザルト ═══ */
+.result{text-align:center;padding:28px 20px}
+.rank{
+  font-size:110px;line-height:1;color:var(--gold);
+  text-shadow:var(--px) var(--px) 0 var(--blood),calc(var(--px)*2) calc(var(--px)*2) 0 var(--void);
+  margin-bottom:4px;
+}
+.rank.s{color:var(--lime)}
+.rank.c{color:var(--coral)}
+.result .score{font-size:42px;color:var(--bone);margin-bottom:6px}
+.result .newbest{color:var(--lime);font-size:14px;letter-spacing:.16em;animation:blink .7s steps(2) infinite}
+.stats{
+  display:grid;gap:12px;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));
+  margin:28px 0;text-align:left;
+}
+.stat{background:var(--deep);padding:12px 14px;box-shadow:0 0 0 2px var(--slate)}
+.stat span{display:block;font-size:11px;color:var(--slate);letter-spacing:.12em}
+.stat b{font-size:24px;color:var(--gold);font-weight:400}
+
+.weak{text-align:left;margin-top:8px;padding:18px;background:var(--steel);box-shadow:0 0 0 var(--px) var(--coral)}
+.weak h3{font-size:16px;color:var(--coral);font-weight:400;margin-bottom:10px}
+.weak li{list-style:none;font-size:14px;padding:5px 0 5px 20px;position:relative}
+.weak li::before{content:"▸";position:absolute;left:0;color:var(--coral)}
+.weak .tip{font-size:13px;color:var(--slate);margin-top:12px;line-height:1.7}
+
+.actions{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin-top:28px}
+
+.foot{margin-top:40px;font-size:12px;color:var(--slate);text-align:center;line-height:1.9}
+
+@media (prefers-reduced-motion:reduce){
+  *,*::before,*::after{animation:none !important;transition:none !important}
+}
+@media(max-width:600px){
+  .wrap{padding:20px 14px 60px}
+  .code{font-size:12.5px}
+  .combo{right:12px;font-size:32px}
+}
+</style>
+
+<div class="wrap">
+
+  <!-- ══════ タイトル ══════ -->
+  <section id="s-title" class="title-screen">
+    <div class="logo">BUG<span class="glyph">*</span>HUNTER</div>
+    <p class="sub">基礎プログラミングII ／ 前期理解度試験 対策</p>
+
+    <div class="mode-grid">
+      <button class="mode-card" data-mode="hunt">
+        <span class="mode-icon">🎯</span>
+        <h2>バグハンター</h2>
+        <p>コードの中から壊れている1行を撃ち抜く。第3問（30点）と同じ作業を、そのまま操作にした練習。</p>
+        <span class="meta">全18問 ／ ミス3回で終了</span>
+      </button>
+
+      <button class="mode-card" data-mode="time">
+        <span class="mode-icon">⏱</span>
+        <h2>タイムアタック</h2>
+        <p>90秒で何問答えられるか。連続正解でスコア倍率が上がる。範囲は第2〜13回の全部。</p>
+        <span class="meta">90秒 ／ 全40問からシャッフル</span>
+      </button>
+    </div>
+
+    <p class="best-line" id="best-line">記録を読み込み中…</p>
+
+    <p class="foot">
+      キーボードでも操作できます。選択肢は <b>1〜4</b>、次へ進むのは <b>Enter</b>。<br>
+      間違えた問題は最後にトピック別でまとまります。
+    </p>
+  </section>
+
+
+  <!-- ══════ バグハンター ══════ -->
+  <section id="s-hunt" class="hidden">
+    <div class="hud">
+      <div class="hud-item">STAGE<b id="h-stage">1 / 18</b></div>
+      <div class="hud-item">SCORE<b id="h-score">0</b></div>
+      <div class="hud-item">
+        残機
+        <div class="hp" id="h-hp"><span></span><span></span><span></span></div>
+      </div>
+      <button class="btn ghost" data-act="quit">やめる</button>
+    </div>
+
+    <div class="stage" id="h-stage-box">
+      <p class="eyebrow" id="h-topic">FILE I/O</p>
+      <p class="prompt" id="h-prompt">壊れている行をクリックしてください。</p>
+      <div class="code" id="h-code"></div>
+      <div id="h-verdict"></div>
+    </div>
+  </section>
+
+
+  <!-- ══════ タイムアタック ══════ -->
+  <section id="s-time" class="hidden">
+    <div class="hud">
+      <div class="hud-item">SCORE<b id="t-score">0</b></div>
+      <div class="hud-item">COMBO<b id="t-combo">×1</b></div>
+      <div class="hud-item" id="t-timer-wrap">
+        のこり <b id="t-time">90</b>
+        <div class="timer-track"><div class="timer-fill" id="t-fill"></div></div>
+      </div>
+      <button class="btn ghost" data-act="quit">やめる</button>
+    </div>
+
+    <div class="panel">
+      <p class="eyebrow" id="t-topic">構造体</p>
+      <div class="q-text" id="t-q"></div>
+      <div class="choices" id="t-choices"></div>
+    </div>
+  </section>
+
+  <div class="combo" id="combo-fx"></div>
+
+
+  <!-- ══════ リザルト ══════ -->
+  <section id="s-result" class="hidden">
+    <div class="panel result">
+      <div class="rank" id="r-rank">A</div>
+      <p class="eyebrow" id="r-mode">TIME ATTACK</p>
+      <div class="score" id="r-score">0</div>
+      <p class="newbest hidden" id="r-newbest">★ NEW RECORD ★</p>
+
+      <div class="stats" id="r-stats"></div>
+      <div id="r-weak"></div>
+
+      <div class="actions">
+        <button class="btn" data-act="retry">もう一度</button>
+        <button class="btn ghost" data-act="home">モード選択へ</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+
+<script>
+/* ═══════════════════════════════════════════
+   バグハンター問題（clickする行＝bug）
+   ═══════════════════════════════════════════ */
+const HUNT = [
+{topic:"構造体",why:"name は char[50] という<b>配列</b>。= で文字列をまるごと代入できない。配列名はアドレスを表すだけで、代入先にはならない。",
+ fix:'#include <string.h>\nstrcpy(s.name, "神山四角子");',
+ bug:9,lines:[
+ '#include <stdio.h>','','typedef struct {','    char name[50];','    int  score;','} Student;','',
+ 'int main(void) {','    Student s;','    s.name = "神山四角子";','    s.score = 90;',
+ '    printf("%s: %d点\\n", s.name, s.score);','    return 0;','}']},
+
+{topic:"構造体",why:"hero は<b>ポインタではなく普通の構造体変数</b>。-> はポインタ専用の演算子なので使えない。",
+ fix:'hero.hp = 100;',
+ bug:1,lines:['struct character hero;','hero->hp = 100;']},
+
+{topic:"構造体",why:"p は<b>ポインタ</b>なので . ではなく -> を使う。(*p).hp と書いてもよい。",
+ fix:'printf("%d\\n", p->hp);',
+ bug:2,lines:['Character hero = {"勇者", 40};','Character *p = &hero;','printf("%d\\n", p.hp);']},
+
+{topic:"構造体",why:"構造体の初期化は<b>定義した順番通り</b>に並べる。定義は name → hp → attack なのに、1番目に数値を渡している。",
+ fix:'Character boss = {"ラスボス", 999, 77};',
+ bug:1,lines:['/* typedef struct { char name[16]; int hp; int attack; } Character; */',
+ 'Character boss = {999, "ラスボス", 77};']},
+
+{topic:"構造体",why:"strcpy は <string.h> で宣言されている。インクルードしないと宣言が見つからず警告・エラーになる。",
+ fix:'#include <string.h>   /* stdlib.h ではなく string.h */',
+ bug:1,lines:['#include <stdio.h>','#include <stdlib.h>','','typedef struct { char name[16]; } Character;','',
+ 'int main(void) {','    Character c;','    strcpy(c.name, "勇者");','    return 0;','}']},
+
+{topic:"動的メモリ",why:"malloc は失敗すると <b>NULL を返す</b>。NULL チェックなしでこの行を実行するとクラッシュする。",
+ fix:'int *arr = malloc(n * sizeof(int));\nif (arr == NULL) { return 1; }\narr[0] = 100;',
+ bug:2,lines:['int n = 10;','int *arr = malloc(n * sizeof(int));','arr[0] = 100;','free(arr);']},
+
+{topic:"動的メモリ",why:"int を n 個分には <b>n * sizeof(int)</b> バイト（通常40バイト）必要。10バイトしか確保していないので arr[9] は範囲外アクセス。",
+ fix:'int *arr = malloc(n * sizeof(int));',
+ bug:1,lines:['int n = 10;','int *arr = malloc(n);','if (arr == NULL) { return 1; }','arr[9] = 100;','free(arr);']},
+
+{topic:"動的メモリ",why:"すでに解放した領域をもう一度解放する<b>二重 free</b>。クラッシュの原因になる。",
+ fix:'free(data);\ndata = NULL;   /* free(NULL) は無害なので事故を防げる */',
+ bug:3,lines:['int *data = malloc(5 * sizeof(int));','if (data == NULL) { return 1; }','free(data);','free(data);']},
+
+{topic:"動的メモリ",why:"解放済みの領域はもう自分のものではない（<b>ダングリングポインタ</b>）。読んだ値は保証されず、動いて見えても危険。",
+ fix:'printf("%d\\n", data[0]);   /* 使うのは free の前 */\nfree(data);\ndata = NULL;',
+ bug:3,lines:['int *data = malloc(5 * sizeof(int));','data[0] = 42;','free(data);','printf("%d\\n", data[0]);']},
+
+{topic:"動的メモリ",why:"realloc は失敗すると NULL を返すが、<b>元の領域はまだ生きている</b>。元のポインタに直接代入するとアドレスを失い、free できなくなる（メモリリーク）。",
+ fix:'int *tmp = realloc(arr, 10 * sizeof(int));\nif (tmp == NULL) { free(arr); return 1; }\narr = tmp;',
+ bug:2,lines:['int *arr = malloc(5 * sizeof(int));','if (arr == NULL) { return 1; }','arr = realloc(arr, 10 * sizeof(int));','if (arr == NULL) { return 1; }']},
+
+{topic:"ファイル操作",why:"fopen は開けなかったとき <b>NULL を返す</b>。直後の NULL チェックがないので、fp が NULL のままこの行に来るとクラッシュする。",
+ fix:'FILE *fp = fopen("color.csv", "r");\nif (fp == NULL) { return 1; }\nfgets(line, sizeof(line), fp);',
+ bug:2,lines:['FILE *fp = fopen("color.csv", "r");','char line[256];','fgets(line, sizeof(line), fp);']},
+
+{topic:"ファイル操作",why:'"w" は既存の中身を<b>全消去</b>してから書く。「末尾に足したい」という目的と逆で、これまでの記録が消える。',
+ fix:'FILE *fp = fopen("log.csv", "a");   /* a = append */',
+ bug:1,lines:['/* すでにある記録の末尾に、今日のデータを1行足したい */','FILE *fp = fopen("log.csv", "w");','if (fp == NULL) { return 1; }','fprintf(fp, "2026-07-27,25,60.5\\n");','fclose(fp);']},
+
+{topic:"ファイル操作",why:"第2引数が 100 で、配列サイズ 256 と一致していない。配列サイズを変えたときに直し忘れるバグにもなる。",
+ fix:'while (fgets(line, sizeof(line), fp) != NULL) {',
+ bug:1,lines:['char line[256];','while (fgets(line, 100, fp) != NULL) {','    printf("%s", line);','}']},
+
+{topic:"ファイル操作",why:"fp = NULL はポインタを NULL に戻すだけで、<b>ファイルは閉じられない</b>。fclose を呼ばないとバッファのデータが書き出されず、ファイルが空のままになることがある。",
+ fix:'fclose(fp);\nfp = NULL;',
+ bug:3,lines:['FILE *fp = fopen("result.csv", "w");','if (fp == NULL) { return 1; }','fprintf(fp, "教室,25,60.5\\n");','fp = NULL;','return 0;']},
+
+{topic:"ファイル操作",why:"%f は 55.000000 のように小数点以下6桁で出力される。CSV としては読みにくく、指定の形式にならない。",
+ fix:'fprintf(fp, "%s,%d,%.1f\\n", d.location, d.temperature, d.humidity);',
+ bug:1,lines:['SensorData d = {"廊下", 22, 55.0};','fprintf(fp, "%s,%d,%f\\n", d.location, d.temperature, d.humidity);']},
+
+{topic:"ファイル操作",why:"location は <b>char 配列</b>で、配列名がそのままアドレスを表す。& を付けると型が合わなくなる。int・float だけ & が必要。",
+ fix:'sscanf(line, "%31[^,],%d,%f", d.location, &d.temperature, &d.humidity);',
+ bug:2,lines:['/* CSV 1行： "教室,25,60.5" */','SensorData d;','sscanf(line, "%31[^,],%d,%f", &d.location, &d.temperature, &d.humidity);']},
+
+{topic:"ファイル操作",why:"fprintf は<b>第1引数にファイルポインタ</b>を渡す関数。fp を渡していないので、書式文字列がファイルポインタとして扱われエラーになる。",
+ fix:'fprintf(fp, "%s,%d\\n", "教室", 25);',
+ bug:2,lines:['FILE *fp = fopen("result.csv", "w");','if (fp == NULL) { return 1; }','fprintf("%s,%d\\n", "教室", 25);','fclose(fp);']},
+
+{topic:"ファイル操作",why:"fp は malloc で確保したメモリではなく <b>fopen が返したファイルポインタ</b>。free では閉じられない。malloc↔free / fopen↔fclose の対応で覚える。",
+ fix:'fclose(fp);\nfp = NULL;',
+ bug:3,lines:['FILE *fp = fopen("data.csv", "r");','if (fp == NULL) { return 1; }','/* ...読み込み処理... */','free(fp);','fp = NULL;']}
+];
+
+
+/* ═══════════════════════════════════════════
+   タイムアタック問題
+   ═══════════════════════════════════════════ */
+const QUIZ = [
+/* 構造体 */
+{t:"構造体",q:"C言語の構造体の正しい定義はどれか。",code:0,mono:1,
+ c:["struct character { char *name; int hp; };","character struct { char *name; int hp; };","struct character( char *name; int hp; )","Character { char *name; int hp; }"],a:0,
+ e:"struct → 型名 → { メンバ; } → 末尾の ; の順。() ではなく {} で囲む。"},
+{t:"構造体",q:"typedef struct { ... } Student; と書くメリットは？",
+ c:["メモリ使用量が減る","変数宣言のたびに struct を書かなくてよくなる","メンバ数の制限がなくなる","ドット演算子が使えるようになる"],a:1,
+ e:"typedef あり → Student s;／なし → struct Student s;"},
+{t:"構造体",q:"struct character hero; のとき、HP を 50 にする正しい書き方は？",mono:1,
+ c:["hero.hp = 50;","hero->hp = 50;","character.hp = 50;","hero(hp) = 50;"],a:0,
+ e:". は通常の変数、-> はポインタ。character は型名であって変数名ではない。"},
+{t:"構造体",q:"Character *p = &hero; のとき、(*p).name と同じ意味なのは？",mono:1,
+ c:["p.name","p->name","&p.name","*p.name"],a:1,
+ e:"p はアドレスなので p.name とは書けない。読みやすくするために -> がある。"},
+{t:"構造体",q:'char name[50] のメンバに "神山四角子" を代入する正しいコードは？',mono:1,
+ c:['student1.name = "神山四角子";','strcpy(student1.name, "神山四角子");','student1.name[] = "神山四角子";','student1->name = "神山四角子";'],a:1,
+ e:"配列は = で丸ごと代入できない。char *name（ポインタ）なら = が使える点に注意。"},
+{t:"構造体",q:"strcpy を使うために必要なヘッダファイルは？",mono:1,
+ c:["#include <stdio.h>","#include <stdlib.h>","#include <string.h>","#include <math.h>"],a:2,
+ e:"string.h → strcpy / strlen。stdlib.h → malloc / free。"},
+{t:"構造体",q:"メンバが name / hp / attack / defense の順で定義された構造体の、正しい初期化は？",mono:1,
+ c:['{999, "ラスボス", 77, 33}','{"ラスボス", 999, 77, 33}','{hp: 999, name: "ラスボス"}','boss("ラスボス", 999, 77, 33)'],a:1,
+ e:"定義した順番通りに並べる。キー付き初期化は C では使えない（JavaScript の書き方）。"},
+{t:"構造体",q:"関数の中で構造体を書き換え、その変更を呼び出し元に反映させたい。正しい渡し方は？",mono:1,
+ c:["値渡し：void heal(Character c)","ポインタ渡し：void heal(Character *c)","どちらでも同じ結果になる","構造体は関数に渡せない"],a:1,
+ e:"値渡しはコピーを渡すので呼び出し元に届かない。読むだけなら値渡しでよい。"},
+
+/* 動的メモリ */
+{t:"動的メモリ",q:"malloc の説明として正しいのは？",
+ c:["変数を宣言する","実行中にメモリを確保する","ファイルにデータを書き込む","配列の要素数を返す"],a:1,
+ e:"malloc = Memory ALLOCate。配列は書くときにサイズを決めるが、malloc は動かしながら決められる。"},
+{t:"動的メモリ",q:"malloc が失敗したとき返す値は？",mono:1,
+ c:["0","-1","NULL","EOF"],a:2,
+ e:"fopen も fgets（終端）も NULL。「失敗・終端は全部 NULL」。"},
+{t:"動的メモリ",q:"malloc / free を使うために必要なヘッダファイルは？",mono:1,
+ c:["#include <stdio.h>","#include <stdlib.h>","#include <string.h>","#include <memory.h>"],a:1,
+ e:"stdlib.h。strcpy の string.h と混同しやすい。"},
+{t:"動的メモリ",q:"int 型を n 個分確保する正しい書き方は？",mono:1,
+ c:["int *arr = malloc(n);","int *arr = malloc(sizeof(int));","int *arr = malloc(n * sizeof(int));","int *arr = malloc(n * int);"],a:2,
+ e:"個数 × 1個あたりのバイト数。malloc(n) だと n バイトしか確保されない。"},
+{t:"動的メモリ",q:"malloc で確保したメモリを解放する関数は？",mono:1,
+ c:["delete","release","fclose","free"],a:3,
+ e:"malloc/realloc → free ／ fopen → fclose。delete は C++ の演算子。"},
+{t:"動的メモリ",q:"free を呼ばずに確保し続けたときに起きる現象の名前は？",
+ c:["二重 free","メモリリーク","ダングリングポインタ","セグメンテーション違反"],a:1,
+ e:"free忘れ→リーク／2回free→二重free／free後に使う→ダングリング。"},
+{t:"動的メモリ",q:"free(ptr); の直後に ptr = NULL; と書くのはなぜ？",
+ c:["メモリ使用量をさらに減らすため","解放済みポインタの誤使用と二重 free を防ぐため","free が動いたか確認するため","文法上、必須だから"],a:1,
+ e:"free してもポインタには古いアドレスが残る。free(NULL) は無害なので二重 free も防げる。"},
+{t:"動的メモリ",q:"realloc で配列を拡張するとき、正しい書き方は？",mono:1,
+ c:["arr = realloc(arr, n*sizeof(int)); if (arr == NULL) return 1;",
+    "int *tmp = realloc(arr, n*sizeof(int)); if (tmp == NULL) { free(arr); return 1; } arr = tmp;",
+    "realloc(arr, n*sizeof(int)); （戻り値は使わない）",
+    "free(arr); arr = malloc(n*sizeof(int));"],a:1,
+ e:"失敗時も元の領域は生きている。直接代入するとアドレスを失ってリークする。"},
+
+/* ファイル書き込み */
+{t:"ファイル書き込み",q:"fopen が失敗したとき返す値は？",mono:1,
+ c:["0","EOF","NULL","-1"],a:2,
+ e:"直後の if (fp == NULL) チェックは必須。"},
+{t:"ファイル書き込み",q:'すでに中身があるファイルを "w" で開くとどうなる？',
+ c:["末尾から追記される","中身が全部消えてから書き込まれる","エラーになって NULL が返る","先頭から上書きされ、残りは残る"],a:1,
+ e:'"w" は全消去。消したくないなら "a"。ここが試験で最も狙われる。'},
+{t:"ファイル書き込み",q:"ファイルの末尾に追記したいとき、fopen に渡すモードは？",mono:1,
+ c:['"r"','"w"','"a"','"x"'],a:2,
+ e:'"r" 読み込み専用（なければNULL）／"w" 全消去／"a" 追記（なければ新規作成）。'},
+{t:"ファイル書き込み",q:"fprintf と printf の違いとして正しいのは？",
+ c:["fprintf は整数しか書けない","fprintf は第1引数にファイルポインタを渡す","fprintf は画面への表示専用","fprintf に書式文字列は不要"],a:1,
+ e:"違いは第1引数だけ。書式文字列の使い方は同じ。"},
+{t:"ファイル書き込み",q:"float の湿度 60.5 を CSV に書くとき、最も適切な書式は？",mono:1,
+ c:["%f","%.1f","%d","%s"],a:1,
+ e:"%f だと 60.500000 と6桁出る。%d は整数用なので不正な値になる。"},
+{t:"ファイル書き込み",q:"ファイルを正しく閉じる書き方は？",mono:1,
+ c:["fp = NULL;","fclose;","fclose(fp); fp = NULL;","free(fp);"],a:2,
+ e:"fp = NULL だけではファイルは閉じられない。free(fp) は誤り。"},
+{t:"ファイル書き込み",q:"書き込み後に fclose を呼び忘れると何が起きる？",
+ c:["何も起きない。省略してよい","バッファのデータが書き出されず、ファイルが空になることがある","ファイルが自動的に削除される","次回 fopen でエラーになる"],a:1,
+ e:"fclose は「バッファを書き出す」＋「閉じる」の2つの仕事をしている。"},
+{t:"ファイル書き込み",q:'"r" で開いたファイルに fprintf すると？',
+ c:["正常に書き込まれる",'"r" は読み込み専用なので書き込めない','自動的に "w" に切り替わる',"末尾に追記される"],a:1,
+ e:'書きたいなら "w"（全消去）か "a"（追記）。'},
+
+/* ファイル読み込み */
+{t:"ファイル読み込み",q:"第9回の fscanf ではなく、第10回から fgets を使うようになったのはなぜ？",
+ c:["fscanf は数値しか読めないから",'fscanf はスペースで読み取りを止めるので "夕焼け オレンジ,30,90" が1行として読めないから',"fscanf は C99 で廃止されたから","fgets のほうが処理が速いから"],a:1,
+ e:"fscanf は空白を区切りとして扱う。fgets なら1行まるごと読めるので、あとから sscanf で分解する。"},
+{t:"ファイル読み込み",q:"char line[256]; に対して fgets の第2引数として最も適切なのは？",mono:1,
+ c:["256","strlen(line)","sizeof(line)","100"],a:2,
+ e:"配列サイズを変えても自動で追従する。直書きは更新忘れのバグになる。"},
+{t:"ファイル読み込み",q:"fgets がファイルの終端に達したとき返す値は？",mono:1,
+ c:["0","EOF","NULL",'"\\n"'],a:2,
+ e:"EOF ではない。while (fgets(...) != NULL) でループを回す。"},
+{t:"ファイル読み込み",q:"sscanf はどこからデータを読み取る？",
+ c:["キーボード（標準入力）","ファイル","メモリ上の文字列","標準エラー出力"],a:2,
+ e:"scanf→キーボード／fscanf→ファイル／sscanf→文字列。s は String。"},
+{t:"ファイル読み込み",q:'sscanf(line, "%31[^,],%d,%f", ???) の引数として正しいのは？（location は char[32]、temperature は int、humidity は float）',mono:1,
+ c:["d.location, d.temperature, d.humidity","&d.location, &d.temperature, &d.humidity","d.location, &d.temperature, &d.humidity","&d.location, d.temperature, d.humidity"],a:2,
+ e:"char 配列は配列名がアドレスなので & 不要。int・float は & 必要。この非対称が定番。"},
+{t:"ファイル読み込み",q:"書式指定 %31[^,] の意味は？",mono:1,
+ c:["31文字目だけを読む","カンマ以外の文字を最大31文字読む","カンマを31個読む","31行目を読む"],a:1,
+ e:"[^,] は「カンマ以外」。CSV の1つ目のフィールドを取り出せる。"},
+{t:"ファイル読み込み",q:"char location[32] に対して %32[^,] ではなく %31[^,] と書くのはなぜ？",mono:1,
+ c:["31 のほうが処理が速いから","文字列の終端 \\0 を入れる1バイトを空けるため","C言語では奇数しか指定できないから","特に理由はない"],a:1,
+ e:"配列サイズ − 1。末尾のヌル文字のぶんを空けておく。"},
+{t:"ファイル読み込み",q:"sscanf の戻り値は何を表す？",
+ c:["読み取りに成功した項目の個数","読み取った文字数","成功なら0、失敗なら-1","読み取った文字列そのもの"],a:0,
+ e:"3項目なら == 3 で成功判定できる。壊れた行を読み飛ばせる。"},
+
+/* GitHub */
+{t:"GitHub",q:"git add main.c を実行すると何が起きる？",
+ c:["main.c を GitHub にアップロードする","コミット履歴に永久保存する","変更をステージングエリアに追加する","削除対象としてマークする"],a:2,
+ e:"add はコミット準備。GitHub への送信は push が担当。"},
+{t:"GitHub",q:"git commit と git push の説明として正しいのは？",
+ c:["commit はローカルに記録・push はリモートに送信","commit はリモートに送信・push はローカルに保存","commit と push は同じ操作","commit の前に必ず push が必要"],a:0,
+ e:"commit までは自分の PC の中（ネット不要）。push で初めて GitHub に届く。"},
+{t:"GitHub",q:"GitHub で他人のリポジトリを Fork するとどうなる？",
+ c:["相手のリポジトリを削除してバックアップを取る","他人のリポジトリを自分の GitHub アカウントにコピーする","変更履歴をすべて消去する","ファイルをローカルにダウンロードする"],a:1,
+ e:"Fork は GitHub 上にコピー。元のリポジトリには影響しない。"},
+{t:"GitHub",q:"Fork と clone の違いとして正しいのは？",
+ c:["Fork は自分の PC に、clone は GitHub 上にコピーを作る","Fork は GitHub 上に、clone は自分の PC にコピーを作る","どちらも同じ操作","Fork は公開、clone は非公開リポジトリに使う"],a:1,
+ e:"「場所」で区別する。Fork→clone→編集→add/commit/push→PR→Merge。"},
+{t:"GitHub",q:"Pull Request を送る目的として正しいのは？",
+ c:["変更を相手のリポジトリに取り込んでほしいと提案する","Fork 元から他人のコードを削除する","ファイルをアップロードするコマンドを実行する","変更を一時停止してブックマークする"],a:0,
+ e:"PR は提案。受け取った側がレビューして Merge する。アップロードは push の役割。"},
+{t:"GitHub",q:"GitHub の README.md の主な目的は？",
+ c:["コンパイルエラーを記録する","コミットメッセージを保存する","リポジトリのトップに表示される「このコードの説明書」","push 時に自動生成されるバックアップ"],a:2,
+ e:"リポジトリを開くと自動表示される。変更履歴は git log や Commits タブで見る。"},
+{t:"GitHub",q:"Markdown で大見出しを正しく書いているのは？",mono:1,
+ c:["#見出し1（スペースなし）","# 見出し1（スペースあり）","<h1>見出し1</h1>","**見出し1**"],a:1,
+ e:"# の直後に半角スペースが必要。** ** は太字。"},
+{t:"GitHub",q:"編集して git push したのに GitHub 上で何も変わっていない。最も考えられる原因は？",
+ c:["git add と git commit をしていない","ネットに接続していない","ブランチ名が間違っている","README.md を更新していない"],a:0,
+ e:"push はローカルの「記録」を送るコマンド。commit していないと送るものがない。"}
+];
+
+
+/* ═══════════════════════════════════════════
+   状態・ユーティリティ
+   ═══════════════════════════════════════════ */
+const $  = s => document.querySelector(s);
+const $$ = s => [...document.querySelectorAll(s)];
+const esc = s => s.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const shuffle = a => { const r=[...a]; for(let i=r.length-1;i>0;i--){const j=(Math.random()*(i+1))|0;[r[i],r[j]]=[r[j],r[i]];} return r; };
+
+let best = { hunt:0, time:0 };
+let mode = null, S = {};
+
+async function loadBest(){
+  try{
+    const r = await window.storage.get("bughunter-best");
+    if(r && r.value) best = Object.assign(best, JSON.parse(r.value));
+  }catch(e){ /* 初回は記録なし */ }
+  paintBest();
+}
+async function saveBest(){
+  try{ await window.storage.set("bughunter-best", JSON.stringify(best)); }catch(e){}
+}
+function paintBest(){
+  $("#best-line").innerHTML =
+    `ハイスコア　バグハンター <b>${best.hunt}</b>　／　タイムアタック <b>${best.time}</b>`;
+}
+
+function show(id){
+  ["#s-title","#s-hunt","#s-time","#s-result"].forEach(s=>$(s).classList.add("hidden"));
+  $(id).classList.remove("hidden");
+  window.scrollTo({top:0});
+}
+
+
+/* ═══════════════════════════════════════════
+   バグハンター
+   ═══════════════════════════════════════════ */
+function startHunt(){
+  mode = "hunt";
+  S = { list:shuffle(HUNT), i:0, score:0, hp:3, cleared:0, wrongTopics:{} , locked:false};
+  show("#s-hunt");
+  drawHunt();
+}
+
+function drawHunt(){
+  const p = S.list[S.i];
+  S.locked = false;
+  $("#h-stage").textContent = `${S.i+1} / ${S.list.length}`;
+  $("#h-score").textContent = S.score;
+  $("#h-topic").textContent = p.topic;
+  $("#h-prompt").textContent = "壊れている行をクリックしてください。";
+  $("#h-verdict").innerHTML = "";
+
+  $("#h-code").innerHTML = p.lines.map((src,idx)=>{
+    const blank = src.trim()==="";
+    return `<div class="line${blank?"":" target"}" ${blank?"":`role="button" tabindex="0" data-i="${idx}"`}>
+      <span class="no">${idx+1}</span><span class="src">${esc(src)||" "}</span></div>`;
+  }).join("");
+
+  $$("#h-code .line.target").forEach(el=>{
+    el.addEventListener("click",()=>pick(+el.dataset.i));
+    el.addEventListener("keydown",ev=>{
+      if(ev.key==="Enter"||ev.key===" "){ ev.preventDefault(); pick(+el.dataset.i); }
+    });
+  });
+  paintHP();
+}
+
+function paintHP(){
+  $("#h-hp").innerHTML = [0,1,2].map(i=>`<span class="${i<S.hp?"":"lost"}"></span>`).join("");
+}
+
+function pick(idx){
+  if(S.locked) return;
+  S.locked = true;
+  const p = S.list[S.i];
+  const ok = idx === p.bug;
+  const lines = $$("#h-code .line");
+
+  $$("#h-code .line.target").forEach(el=>{ el.classList.remove("target"); el.removeAttribute("tabindex"); });
+
+  if(ok){
+    lines[idx].classList.add("hit");
+    S.score += 100 + S.hp*20;
+    S.cleared++;
+  }else{
+    lines[idx].classList.add("miss");
+    lines[p.bug].classList.add("reveal");
+    S.hp--;
+    S.wrongTopics[p.topic] = (S.wrongTopics[p.topic]||0)+1;
+    $("#h-stage-box").classList.add("shake");
+    setTimeout(()=>$("#h-stage-box").classList.remove("shake"),320);
+  }
+  paintHP();
+  $("#h-score").textContent = S.score;
+
+  const last = S.i === S.list.length-1;
+  const dead = S.hp <= 0;
+  $("#h-verdict").innerHTML = `
+    <div class="verdict ${ok?"good":"bad"}">
+      <h3>${ok?"命中　"+(100+ (S.hp)*20)+" pts":"はずれ　残機 −1"}</h3>
+      <dl>
+        <dt>バグの正体</dt>
+        <dd>${p.lines[p.bug].trim()}</dd>
+        <dt>なぜ問題か</dt>
+        <dd>${p.why}</dd>
+        <dt>修正</dt>
+        <dd><pre>${esc(p.fix)}</pre></dd>
+      </dl>
+      <div class="next">
+        <button class="btn" id="h-next">${dead?"結果を見る":(last?"結果を見る":"次のコードへ　▶")}</button>
+      </div>
+    </div>`;
+  $("#h-next").focus();
+  $("#h-next").addEventListener("click",()=>{
+    if(dead || last) finish();
+    else { S.i++; drawHunt(); }
+  });
+}
+
+
+/* ═══════════════════════════════════════════
+   タイムアタック
+   ═══════════════════════════════════════════ */
+const LIMIT = 90;
+
+function startTime(){
+  mode = "time";
+  S = { list:shuffle(QUIZ), i:0, score:0, combo:0, maxCombo:0,
+        correct:0, answered:0, wrongTopics:{}, left:LIMIT, locked:false };
+  show("#s-time");
+  drawQ();
+  S.timer = setInterval(tick,1000);
+  paintTimer();
+}
+
+function tick(){
+  S.left--;
+  paintTimer();
+  if(S.left<=0){ clearInterval(S.timer); finish(); }
+}
+
+function paintTimer(){
+  $("#t-time").textContent = S.left;
+  const f = $("#t-fill");
+  f.style.width = (S.left/LIMIT*100)+"%";
+  f.className = "timer-fill" + (S.left<=10?" crit":S.left<=25?" warn":"");
+}
+
+function mult(){ return S.combo>=10?4 : S.combo>=6?3 : S.combo>=3?2 : 1; }
+
+function drawQ(){
+  const q = S.list[S.i % S.list.length];
+  S.locked = false;
+  $("#t-topic").textContent = q.t;
+  $("#t-q").innerHTML = esc(q.q).replace(/\n/g,"<br>");
+  $("#t-choices").innerHTML = q.c.map((c,i)=>
+    `<button class="choice${q.mono?"":" plain"}" data-i="${i}">
+       <span class="key">${i+1}</span><span class="txt">${esc(c)}</span></button>`).join("");
+  $$("#t-choices .choice").forEach(b=>b.addEventListener("click",()=>answer(+b.dataset.i)));
+}
+
+function answer(i){
+  if(S.locked) return;
+  S.locked = true;
+  const q = S.list[S.i % S.list.length];
+  const btns = $$("#t-choices .choice");
+  btns.forEach(b=>b.disabled=true);
+  S.answered++;
+
+  if(i===q.a){
+    btns[i].classList.add("right");
+    S.combo++;
+    S.maxCombo = Math.max(S.maxCombo,S.combo);
+    S.correct++;
+    const gain = 100*mult();
+    S.score += gain;
+    if(S.combo>=3) popCombo(S.combo+" COMBO");
+  }else{
+    btns[i].classList.add("wrong");
+    btns[q.a].classList.add("right");
+    S.combo = 0;
+    S.left = Math.max(0,S.left-3);   /* 誤答は3秒ペナルティ */
+    S.wrongTopics[q.t] = (S.wrongTopics[q.t]||0)+1;
+    paintTimer();
+  }
+
+  $("#t-score").textContent = S.score;
+  $("#t-combo").textContent = "×"+mult();
+
+  const wait = i===q.a ? 550 : 2300;
+  if(i!==q.a){
+    $("#t-choices").insertAdjacentHTML("beforeend",
+      `<p style="font-size:13px;color:var(--slate);padding:6px 2px;line-height:1.7">${esc(q.e)}　<span style="color:var(--coral)">−3秒</span></p>`);
+  }
+  setTimeout(()=>{
+    if(S.left<=0) return;
+    S.i++;
+    drawQ();
+  },wait);
+}
+
+function popCombo(txt){
+  const el = $("#combo-fx");
+  el.textContent = txt;
+  el.classList.remove("pop");
+  void el.offsetWidth;
+  el.classList.add("pop");
+}
+
+
+/* ═══════════════════════════════════════════
+   リザルト
+   ═══════════════════════════════════════════ */
+const GUIDE = {
+  "構造体":"総まとめ復習ノート 第1章（char配列と strcpy／. と ->）",
+  "動的メモリ":"パターン写経シート 型①（malloc 4点セット）",
+  "ファイル操作":"総まとめ復習ノート 第3章（最重要）",
+  "ファイル書き込み":"パターン写経シート 型③（fopen→fprintf→fclose）",
+  "ファイル読み込み":"パターン写経シート 型②（fgets＋sscanf）",
+  "GitHub":"総まとめ復習ノート 第4章（Fork/clone/PR）"
+};
+
+function finish(){
+  if(S.timer) clearInterval(S.timer);
+
+  const isHunt = mode==="hunt";
+  const score = S.score;
+  const newBest = score > best[mode];
+  if(newBest){ best[mode] = score; saveBest(); paintBest(); }
+
+  const acc = isHunt
+    ? (S.i+1>0 ? Math.round(S.cleared/(S.i+1)*100) : 0)
+    : (S.answered>0 ? Math.round(S.correct/S.answered*100) : 0);
+
+  const rank = acc>=95?"S" : acc>=80?"A" : acc>=60?"B" : "C";
+  const rk = $("#r-rank");
+  rk.textContent = rank;
+  rk.className = "rank " + (rank==="S"?"s":rank==="C"?"c":"");
+
+  $("#r-mode").textContent = isHunt ? "BUG HUNTER" : "TIME ATTACK";
+  $("#r-score").textContent = score.toLocaleString()+" pts";
+  $("#r-newbest").classList.toggle("hidden",!newBest);
+
+  $("#r-stats").innerHTML = isHunt ? `
+    <div class="stat"><span>撃ち抜いた</span><b>${S.cleared} / ${S.i+1}</b></div>
+    <div class="stat"><span>命中率</span><b>${acc}%</b></div>
+    <div class="stat"><span>残機</span><b>${Math.max(0,S.hp)}</b></div>
+    <div class="stat"><span>ベスト</span><b>${best.hunt}</b></div>` : `
+    <div class="stat"><span>正解</span><b>${S.correct} / ${S.answered}</b></div>
+    <div class="stat"><span>正答率</span><b>${acc}%</b></div>
+    <div class="stat"><span>最大コンボ</span><b>${S.maxCombo}</b></div>
+    <div class="stat"><span>ベスト</span><b>${best.time}</b></div>`;
+
+  const weak = Object.entries(S.wrongTopics).sort((a,b)=>b[1]-a[1]);
+  $("#r-weak").innerHTML = weak.length ? `
+    <div class="weak">
+      <h3>取りこぼしたトピック</h3>
+      <ul>${weak.map(([t,n])=>`<li>${t}　${n}問　→　${GUIDE[t]||""}</li>`).join("")}</ul>
+      <p class="tip">同じトピックで2問以上落としていたら、そこが弱点です。該当の資料を読み直してから、もう一度。</p>
+    </div>` : `
+    <div class="weak" style="box-shadow:0 0 0 4px var(--lime)">
+      <h3 style="color:var(--lime)">取りこぼしなし</h3>
+      <p class="tip">全問正解です。模擬試験Aを60分・参照なしで通しで解いてみてください。</p>
+    </div>`;
+
+  show("#s-result");
+}
+
+
+/* ═══════════════════════════════════════════
+   操作
+   ═══════════════════════════════════════════ */
+$$(".mode-card").forEach(b=>b.addEventListener("click",()=>{
+  b.dataset.mode==="hunt" ? startHunt() : startTime();
+}));
+
+document.addEventListener("click",e=>{
+  const act = e.target.dataset && e.target.dataset.act;
+  if(act==="quit"){ if(S.timer) clearInterval(S.timer); show("#s-title"); }
+  if(act==="home"){ show("#s-title"); }
+  if(act==="retry"){ mode==="hunt" ? startHunt() : startTime(); }
+});
+
+document.addEventListener("keydown",e=>{
+  if(!$("#s-time").classList.contains("hidden") && /^[1-4]$/.test(e.key)){
+    const b = $$("#t-choices .choice")[+e.key-1];
+    if(b && !b.disabled) b.click();
+  }
+  if(!$("#s-hunt").classList.contains("hidden") && e.key==="Enter"){
+    const n = $("#h-next"); if(n) n.click();
+  }
+});
+
+loadBest();
+</script>
